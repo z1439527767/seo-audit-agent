@@ -87,10 +87,10 @@ async function audit() {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({url})
     });
-    const data = await res.json();
-    const html = data.html;
-    const data = analyzeClient(html, url);
-    renderResult(data);
+    const resp = await res.json();
+    const html = resp.html;
+    const result = analyzeClient(html, url);
+    renderResult(result);
   } catch(e) {
     document.getElementById('result').innerHTML = '<p style="color:#ef4444">Error: '+e.message+'</p>';
     document.getElementById('result').style.display = 'block';
