@@ -1,0 +1,10 @@
+{
+  "name": "seo-audit-agent",
+  "version": "1.0.0",
+  "description": "AI SEO Audit Agent — zero-dependency, analyzes any URL for SEO issues. Marketplace-ready.",
+  "type": "module",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "keywords": ["seo", "audit", "agent", "marketplace", "zero-dependency"],
+  "license": "MIT"
+}

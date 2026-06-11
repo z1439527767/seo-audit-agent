@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO Audit Agent — Instant SEO Analysis for Any URL</title>
+<meta name="description" content="AI-powered SEO audit. Paste a URL, get a scored report with actionable fixes in seconds. $19/mo.">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;line-height:1.6}
+.container{max-width:720px;margin:0 auto;padding:40px 20px}
+.hero{text-align:center;padding:60px 0 40px}
+.hero h1{font-size:2.4em;margin-bottom:16px;background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:1.15em;color:#94a3b8;max-width:500px;margin:0 auto}
+.url-input{display:flex;gap:12px;margin:32px 0}
+.url-input input{flex:1;padding:14px 18px;border:2px solid #334155;border-radius:12px;background:#1e293b;color:#e2e8f0;font-size:1em}
+.url-input input:focus{outline:none;border-color:#38bdf8}
+.url-input button{padding:14px 28px;background:linear-gradient(135deg,#38bdf8,#818cf8);border:none;border-radius:12px;color:#fff;font-weight:600;cursor:pointer;font-size:1em}
+.result{margin-top:24px;padding:24px;background:#1e293b;border-radius:12px;display:none}
+.result .grade{font-size:3em;font-weight:800;text-align:center}
+.result .score{text-align:center;color:#94a3b8;margin-bottom:16px}
+.grade-A{color:#22c55e}.grade-B{color:#84cc16}.grade-C{color:#eab308}.grade-D{color:#f97316}.grade-F{color:#ef4444}
+.checks{margin-top:16px}
+.check{padding:8px 0;border-bottom:1px solid #334155;display:flex;justify-content:space-between}
+.check .FAIL{color:#ef4444}.check .WARN{color:#eab308}.check .PASS{color:#22c55e}
+.pricing{text-align:center;margin:60px 0 32px;padding:40px;background:#1e293b;border-radius:16px;border:2px solid #334155}
+.pricing h2{font-size:1.6em;margin-bottom:8px}
+.pricing .price{font-size:2.4em;font-weight:800;color:#38bdf8}
+.pricing .period{color:#94a3b8}
+.pricing button{margin-top:20px;padding:16px 40px;background:#22c55e;border:none;border-radius:12px;color:#fff;font-weight:700;font-size:1.1em;cursor:pointer}
+.features{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
+.feature{padding:20px;background:#1e293b;border-radius:12px}
+.feature h3{color:#38bdf8;margin-bottom:8px}
+.footer{text-align:center;color:#64748b;font-size:.85em;padding:32px 0}
+.loading{text-align:center;padding:40px;display:none}
+.spinner{width:40px;height:40px;border:3px solid #334155;border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="hero">
+<h1>SEO Audit Agent</h1>
+<p>AI-powered instant SEO analysis. Paste a URL, get a scored report with actionable fixes.</p>
+</div>
+
+<div class="url-input">
+<input type="url" id="urlInput" placeholder="https://your-site.com" value="https://example.com">
+<button onclick="audit()">Audit Now</button>
+</div>
+
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p>Analyzing page...</p>
+</div>
+
+<div class="result" id="result"></div>
+
+<div class="pricing">
+<h2>Unlimited Audits</h2>
+<div class="price">$19<span class="period">/month</span></div>
+<p style="color:#94a3b8;margin-top:8px">Unlimited URL audits · Batch analysis · Export reports · Priority support</p>
+<button onclick="subscribe()">Subscribe — $19/mo</button>
+</div>
+
+<div class="features">
+<div class="feature"><h3>10-Point Audit</h3><p>Title, meta, headings, mobile, images, links, HTTPS, content length, canonical, structure</p></div>
+<div class="feature"><h3>Scored Report</h3><p>100-point score with A-F grade and prioritized fix list</p></div>
+<div class="feature"><h3>Batch Analysis</h3><p>Audit multiple URLs at once, compare scores</p></div>
+<div class="feature"><h3>API Access</h3><p>REST API for automated CI/CD SEO checks</p></div>
+</div>
+
+<div class="footer">
+© 2026 SEO Audit Agent · Built by AI · Powered by Claude Code
+</div>
+</div>
+
+<script>
+async function audit() {
+  const url = document.getElementById('urlInput').value;
+  if (!url) return;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display = 'none';
+  try {
+    const res = await fetch('/api/audit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    const data = await res.json();
+    renderResult(data);
+  } catch(e) {
+    document.getElementById('result').innerHTML = '<p style="color:#ef4444">Error: '+e.message+'</p>';
+    document.getElementById('result').style.display = 'block';
+  }
+  document.getElementById('loading').style.display = 'none';
+}
+
+function renderResult(data) {
+  const gradeClass = 'grade-' + data.grade;
+  let html = `<div class="grade ${gradeClass}">${data.grade}</div>`;
+  html += `<div class="score">Score: ${data.score}/100 · ${data.wordCount} words · ${data.images} images · ${data.links} links</div>`;
+  html += '<div class="checks">';
+  data.checks.forEach(c => {
+    html += `<div class="check"><span>${c.check}</span><span class="${c.status}">${c.status} ${c.detail||''}</span></div>`;
+  });
+  html += '</div>';
+  document.getElementById('result').innerHTML = html;
+  document.getElementById('result').style.display = 'block';
+}
+
+function subscribe() {
+  window.location.href = '/api/subscribe';
+}
+</script>
+</body>
+</html>
