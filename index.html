@@ -117,17 +117,69 @@ function subscribe() {
 
 function analyzeClient(html, url) {
   var checks = [], score = 100;
-  var getTag = function(t) { var m = html.match(new RegExp('<' + t + '[^>]*>([^<]*)</' + t + '>', 'i')); return m ? m[1].trim() : ''; };
-  var getMeta = function(n) { var m = html.match(new RegExp('<meta[^>]+name=[\\"\\\\']' + n + '[\\"\\\\'][^>]+content=[\\"\\\\']([^\\"\\\\']+)[\\"\\\\']', 'i')); return m ? m[1] : null; };
-  var getAll = function(re) { var m = []; html.replace(re, function(a, v) { m.push(v); }); return m; };
-  var title = getTag('title'), desc = getMeta('description');
-  var h1s = getAll(/<h1[^>]*>([^<]*)<\/h1>/gi), h2s = getAll(/<h2[^>]*>([^<]*)<\/h2>/gi), h3s = getAll(/<h3[^>]*>([^<]*)<\/h3>/gi);
-  var canonical = (html.match(/<link[^>]+rel=[\\"\\\\']canonical[\\"\\\\'][^>]+href=[\\"\\\\']([^\\"\\\\']+)[\\"\\\\']/i) || [])[1] || null;
-  var links = getAll(/<a[^>]+href=[\\"\\\\']([^\\"\\\\']+)[\\"\\\\']/gi), imgs = getAll(/<img[^>]+src=[\\"\\\\']([^\\"\\\\']+)[\\"\\\\']/gi);
+
+  function getTag(t) {
+    var re = new RegExp('<' + t + '[^>]*>([\\s\\S]*?)</' + t + '>', 'i');
+    var m = html.match(re);
+    return m ? m[1].replace(/<[^>]+>/g,'').trim() : '';
+  }
+  function getMeta(n) {
+    var re = new RegExp('<meta[^>]+name=[\"\\']' + n + '[\"\\'][^>]+content=[\"\\']([^\"\\']+)[\"\\']', 'i');
+    var m = html.match(re);
+    return m ? m[1] : null;
+  }
+  function getAll(re) {
+    var m = [], r;
+    while ((r = re.exec(html)) !== null) m.push(r[1]);
+    return m;
+  }
+
+  var title = getTag('title');
+  var desc = getMeta('description');
+  var h1s = getAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi);
+  var h2s = getAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi);
+  var h3s = getAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi);
+  var canonical = (html.match(/<link[^>]+rel=[\"\\']canonical[\"\\'][^>]+href=[\"\\']([^\"\\']+)[\"\\']/i) || [])[1] || null;
+  var links = getAll(/<a[^>]+href=[\"\\']([^\"\\']+)[\"\\']/gi);
+  var imgs = getAll(/<img[^>]+src=[\"\\']([^\"\\']+)[\"\\']/gi);
   var bodyText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   var wordCount = bodyText.split(' ').filter(Boolean).length;
   var host = new URL(url).hostname;
-  var internalLinks = links.filter(function(l) { return l.startsWith('/') || l.includes(host); });
+  var internalLinks = links.filter(function(l) { return l.startsWith('/') || l.indexOf(host) >= 0; });
+
+  if (!title) { checks.push({check:'Title',status:'FAIL',fix:'Add title tag'}); score -= 15; }
+  else if (title.length < 30) { checks.push({check:'Title',status:'WARN',detail:title.length+' chars',fix:'Expand to 50-60 chars'}); score -= 5; }
+  else checks.push({check:'Title',status:'PASS',detail:title.length+' chars'});
+
+  if (!desc) { checks.push({check:'Meta Desc',status:'FAIL',fix:'Add meta description'}); score -= 10; }
+  else if (desc.length < 70) { checks.push({check:'Meta Desc',status:'WARN',detail:desc.length+' chars'}); score -= 3; }
+  else checks.push({check:'Meta Desc',status:'PASS',detail:desc.length+' chars'});
+
+  if (!h1s.length) { checks.push({check:'H1',status:'FAIL',fix:'Add one H1'}); score -= 10; }
+  else if (h1s.length > 1) { checks.push({check:'H1',status:'WARN',detail:h1s.length+' H1s'}); score -= 5; }
+  else checks.push({check:'H1',status:'PASS',detail:h1s[0].substring(0,50)});
+
+  if (!canonical) { checks.push({check:'Canonical',status:'WARN',fix:'Add canonical link'}); score -= 4; }
+  else checks.push({check:'Canonical',status:'PASS',detail:canonical});
+
+  if (html.indexOf('viewport') === -1) { checks.push({check:'Mobile',status:'FAIL',fix:'Add viewport meta'}); score -= 8; }
+  else checks.push({check:'Mobile',status:'PASS'});
+
+  if (wordCount < 300) { checks.push({check:'Content',status:'WARN',detail:wordCount+' words',fix:'Aim for 300+ words'}); score -= 5; }
+  else checks.push({check:'Content',status:'PASS',detail:wordCount+' words'});
+
+  if (internalLinks.length < 3) { checks.push({check:'Links',status:'WARN',detail:internalLinks.length+' internal'}); score -= 3; }
+  else checks.push({check:'Links',status:'PASS',detail:internalLinks.length+' internal'});
+
+  if (url.indexOf('https://') !== 0) { checks.push({check:'HTTPS',status:'FAIL',fix:'Use HTTPS'}); score -= 5; }
+  else checks.push({check:'HTTPS',status:'PASS'});
+
+  if (!h2s.length) { checks.push({check:'Headings',status:'WARN',detail:'no H2s'}); score -= 3; }
+  else checks.push({check:'Headings',status:'PASS',detail:'H1:'+h1s.length+' H2:'+h2s.length});
+
+  var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+  return {url:url,score:Math.max(0,score),grade:grade,wordCount:wordCount,images:imgs.length,links:links.length,checks:checks};
+}
 
   if (!title) { checks.push({check:'Title',status:'FAIL',fix:'Add <title>'}); score -= 15; }
   else if (title.length < 30) { checks.push({check:'Title',status:'WARN',detail:title.length+' chars',fix:'Expand to 50-60 chars'}); score -= 5; }
