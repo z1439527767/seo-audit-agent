@@ -82,9 +82,13 @@ async function audit() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('result').style.display = 'none';
   try {
-    const proxy = 'https://api.allorigins.win/raw?url=';
-    const res = await fetch(proxy + encodeURIComponent(url));
-    const html = await res.text();
+    const res = await fetch('/api/proxy', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url})
+    });
+    const data = await res.json();
+    const html = data.html;
     const data = analyzeClient(html, url);
     renderResult(data);
   } catch(e) {
