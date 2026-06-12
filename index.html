@@ -50,17 +50,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </div>
 <div class="loading" id="loading"><div class="spinner"></div><p>Analyzing page...</p></div>
 <div class="result" id="result"></div>
-<div class="pricing">
-<h2>Unlimited Audits</h2>
-<div class="price">$19<span class="period">/month</span></div>
-<p style="color:#94a3b8;margin-top:8px">Unlimited URL audits &middot; Batch analysis &middot; Export reports &middot; Priority support</p>
-<button onclick="subscribe()">Subscribe $19/mo</button>
+<div class="pricing" style="display:flex;gap:20px">
+<div style="flex:1;padding:24px;background:#1e293b;border-radius:12px;border:1px solid #334155">
+<h2 style="font-size:1.2em">Free</h2>
+<div class="price" style="font-size:1.6em">$0</div>
+<ul style="color:#94a3b8;text-align:left;margin:16px 0;padding-left:20px;line-height:2">
+<li>3 single-URL audits</li>
+<li>10-point checklist</li>
+<li>A-F grade</li>
+</ul>
+<button disabled style="padding:12px 24px;background:#334155;border:none;border-radius:8px;color:#64748b;font-weight:600;cursor:not-allowed;width:100%">Current plan</button>
+</div>
+<div style="flex:1;padding:24px;background:linear-gradient(135deg,#1e293b,#0f172a);border-radius:12px;border:2px solid #38bdf8">
+<h2 style="font-size:1.2em;color:#38bdf8">Pro $19/mo</h2>
+<div class="price" style="font-size:1.6em">$19<span class="period">/month</span></div>
+<ul style="color:#e2e8f0;text-align:left;margin:16px 0;padding-left:20px;line-height:2">
+<li>Unlimited audits</li>
+<li>Batch 100 URLs</li>
+<li>20+ SEO checks</li>
+<li>OG/Twitter card check</li>
+<li>Schema.org validation</li>
+<li>Security headers scan</li>
+<li>Export PDF report</li>
+<li>Audit history</li>
+</ul>
+<button onclick="subscribe()" style="padding:12px 24px;background:#22c55e;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;width:100%">Subscribe $19/mo</button>
+</div>
 </div>
 <div class="features">
-<div class="feature"><h3>10-Point Audit</h3><p>Title, meta, headings, mobile, images, links, HTTPS, content length, canonical, structure</p></div>
-<div class="feature"><h3>Scored Report</h3><p>100-point score with A-F grade and prioritized fix list</p></div>
-<div class="feature"><h3>Batch Analysis</h3><p>Audit multiple URLs at once, compare scores</p></div>
-<div class="feature"><h3>API Access</h3><p>REST API for automated CI/CD SEO checks</p></div>
+<div class="feature"><h3>Single URL Audit</h3><p>One-off instant analysis. Paste a URL, get scored report with prioritized fixes.</p></div>
+<div class="feature"><h3>Batch 100 URLs</h3><p>Paste or upload a list of URLs. Compare scores across your entire site. (Pro)</p></div>
+<div class="feature"><h3>20+ Checks</h3><p>Schema markup, Open Graph, Twitter cards, security headers, robots.txt, sitemap validation. (Pro)</p></div>
+<div class="feature"><h3>PDF Export</h3><p>Download professional audit reports to share with clients or team. (Pro)</p></div>
 </div>
 <div class="footer">&copy; 2026 SEO Audit Agent &middot; Built by AI &middot; Powered by Claude Code</div>
 </div>
@@ -191,6 +212,20 @@ function analyzeClient(html, url) {
   // Heading structure
   if (!h2s.length) { checks.push({check:'Headings',status:'WARN',detail:'no H2s'}); score -= 3; }
   else checks.push({check:'Headings',status:'PASS',detail:'H1:'+h1s.length+' H2:'+h2s.length+' H3:'+h3s.length});
+
+  // PRO checks
+  var ogTitle = doc.querySelector("meta[property="og:title"]");
+  var ogDesc = doc.querySelector("meta[property="og:description"]");
+  if (!ogTitle && !ogDesc) { checks.push({check:"Open Graph",status:"WARN",detail:"missing",fix:"Add OG tags"}); score -= 3; }
+  else checks.push({check:"Open Graph",status:"PASS",detail:(ogTitle?"title ":"")+(ogDesc?"desc ":"").trim()});
+
+  var twCard = doc.querySelector("meta[name="twitter:card"]");
+  if (!twCard) { checks.push({check:"Twitter Card",status:"WARN",detail:"missing",fix:"Add twitter:card"}); score -= 2; }
+  else checks.push({check:"Twitter Card",status:"PASS",detail:twCard.getAttribute("content")});
+
+  var schema = doc.querySelector("script[type="application/ld+json"]");
+  if (!schema) { checks.push({check:"Structured Data",status:"WARN",detail:"missing",fix:"Add JSON-LD schema"}); score -= 3; }
+  else { try { JSON.parse(schema.textContent); checks.push({check:"Structured Data",status:"PASS",detail:"valid"}); } catch(e) { checks.push({check:"Structured Data",status:"WARN",detail:"invalid JSON"}); score -= 1; } }
 
   var grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
   return {url:url,score:Math.max(0,score),grade:grade,wordCount:wordCount,images:imgs.length,links:links.length,checks:checks};
