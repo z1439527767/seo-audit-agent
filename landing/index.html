@@ -46,6 +46,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="url-input">
 <input type="url" id="urlInput" placeholder="https://your-site.com" value="https://example.com">
 <button onclick="audit()">Audit Now</button>
+<span id="freeLeft" style="color:#64748b;font-size:.85em"></span>
 </div>
 <div class="loading" id="loading"><div class="spinner"></div><p>Analyzing page...</p></div>
 <div class="result" id="result"></div>
@@ -64,7 +65,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 <div class="footer">&copy; 2026 SEO Audit Agent &middot; Built by AI &middot; Powered by Claude Code</div>
 </div>
 <script>
+var FREE_LIMIT = 3;
+(function(){ var c = FREE_LIMIT - (parseInt(localStorage.getItem('seo_audits')||'0')); var el = document.getElementById('freeLeft'); if (el && c > 0) el.textContent = c + ' free audits left'; })();
+var count = parseInt(localStorage.getItem('seo_audits') || '0');
+
+function checkPaywall() {
+  if (count >= FREE_LIMIT) {
+    document.getElementById('result').innerHTML = '<div style="text-align:center;padding:30px"><p style="font-size:1.3em;color:#38bdf8;margin-bottom:12px">'+count+' free audits used</p><p style="color:#94a3b8;margin-bottom:20px">Subscribe for unlimited access — $19/mo</p><button onclick="subscribe()" style="padding:16px 40px;background:#22c55e;border:none;border-radius:12px;color:#fff;font-weight:700;font-size:1.1em;cursor:pointer">Subscribe $19/mo</button></div>';
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+    return true;
+  }
+  return false;
+}
+
 async function audit() {
+  if (checkPaywall()) return;
   var url = document.getElementById('urlInput').value;
   if (!url) return;
   document.getElementById('loading').style.display = 'block';
@@ -78,6 +94,8 @@ async function audit() {
     var json = await res.json();
     var html = json.html;
     var result = analyzeClient(html, url);
+    count++;
+    localStorage.setItem('seo_audits', count);
     renderResult(result);
   } catch(e) {
     document.getElementById('result').innerHTML = '<p style="color:#ef4444">Error: '+e.message+'</p>';
